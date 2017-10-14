@@ -1,5 +1,11 @@
 
+import static gui.ElevatorDisplay.Direction.DOWN;
+import static gui.ElevatorDisplay.Direction.UP;
+
 import java.util.ArrayList;
+
+import gui.ElevatorDisplay;
+import gui.ElevatorDisplay.Direction;
 
 public class Elevator {
 	
@@ -9,10 +15,9 @@ public class Elevator {
 	private long floorTime;
 	private long doorOpenTime;
 	private long idleTime;
-	
-	enum direction { EUP, EDOWN, IDLE };
-	private direction state; //state of the elevator
+	private gui.ElevatorDisplay.Direction state; //state of the elevator
 	private boolean doors; // true = open, false = close
+	long clock;
 	
 	private ArrayList<Integer> riders = new ArrayList<Integer>(); // people on elevator
 	private ArrayList<Integer> floorStops = new ArrayList<Integer>(); // stops the elevator has to make as given by people pressing buttons
@@ -27,7 +32,7 @@ public class Elevator {
 		this.floorTime = floorTime;
 		this.doorOpenTime = doorOpenTime;
 		this.idleTime = idleTime;
-		state = direction.IDLE;
+		state = Direction.IDLE;
 	}
 	
 
@@ -37,7 +42,7 @@ public class Elevator {
 	}
 	
 	//return elevator state
-	public direction getState() {
+	public gui.ElevatorDisplay.Direction getState() {
 		return state;
 	}
 
@@ -85,6 +90,32 @@ public class Elevator {
 	public void addRiderStops(int floorId) {
 		riderStops.add(floorId);
 	}
+	
+	public void setCurrentFloor(int currentFloor) {
+		this.currentFloor = currentFloor;
+	}
+	
+	public void moveElevator(int fromFloor, int toFloor) throws InterruptedException {
+    	int numRiders = riders.size();
+    	ElevatorDisplay.getInstance().closeDoors(eId);
+    	doors = false;
+        if (fromFloor < toFloor) {
+            for (int i = fromFloor; i <= toFloor; i++) {
+            	setCurrentFloor(i);
+                ElevatorDisplay.getInstance().updateElevator(eId, i, numRiders, UP);
+                Thread.sleep(floorTime);
+            }
+        } else {
+            for (int i = fromFloor; i >= toFloor; i--) {
+            	setCurrentFloor(i);
+                ElevatorDisplay.getInstance().updateElevator(eId, i, numRiders, DOWN);
+                Thread.sleep(floorTime);
+            }
+        }
+        ElevatorDisplay.getInstance().openDoors(eId);
+        Thread.sleep(doorOpenTime);
+        doors = true;
+    }
 	
 	
 }

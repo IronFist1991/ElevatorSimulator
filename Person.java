@@ -11,7 +11,6 @@ public class Person {
 	location loc;
 	private double waitTime; //how long outside elevator, waiting
 	private double rideTime; // how long in the elevator
-	private String wantToGo; // which direction
 	private boolean direction; //direction true = up, false = down 
 	ElevatorController controller = ElevatorController.getInstance();
 	
@@ -24,27 +23,16 @@ public class Person {
 		this.floorStart = floorStart;
 		this.floorEnd = floorEnd;
 		loc = location.FLOOR;
-		placeOnFloor(floorStart,pId);
 		
-		// for text output
+        //set direction
 		if (floorStart < floorEnd) 
-			wantToGo = "UP";
-		else wantToGo = "DOWN";	
-		// tell elevator controller
-		if (wantToGo.equals("UP"))
 			direction = true;
-		else direction = false;
+		else direction = false;	
 		
 		/*/not sure. wanted to say if person_floor = elevator_floor but go thru controller?
 		if (ElevatorController.getInstance().isPersonOnElevator()){
 		sendDestination(floorStart, floorEnd);
 			// if this is true, the person has entered the elevator and we can start time*/
-	}
-		
-	
-	//Add person to elevator waiting list
-	public void placeOnFloor(int floorNumber, int pId) {
-		
 	}
 	
 	//direction true = up, false = down
@@ -54,9 +42,8 @@ public class Person {
 	}
 	
 	public void sendDestination(){
+		loc = location.ELEV;
 		ElevatorController.getInstance().setFloorEnd(floorEnd);
-		System.out.println(LocalTime.now() + " Person " + pId + " presses " + wantToGo + " on " + floorStart);
-
 	}
 	
 	// set methods
@@ -68,8 +55,20 @@ public class Person {
 		this.rideTime = rideTime;
 	}
 	
+	// getters
 	public int getPid(){
 		return this.pId;
+	}
+	
+	public boolean getDirection() {
+		return this.direction;
+	}
+	
+	// returns true if this person is on an elevator
+	public boolean isOnElevator() {
+		if(loc == location.ELEV)
+			return true;
+		return false;
 	}
 	
 	

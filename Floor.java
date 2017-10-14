@@ -7,7 +7,7 @@ public class Floor {
 	private int floorId; // what floor number
 	private ArrayList<Integer> waitingPeople = new ArrayList<Integer>(); // people waiting on that floor
 	private ArrayList<Integer> donePeople = new ArrayList<Integer>(); // people who have gotten off on that floor
-	Building building = Building.getInstance();
+	Building b = Building.getInstance();
 	
 	//c'tor
 	public Floor(int floorId) {
