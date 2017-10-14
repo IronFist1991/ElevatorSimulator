@@ -1,48 +1,57 @@
-import java.util.ArrayList;
+
+
+import java.util.Random;
 
 public class Building {
-	private static Building instance;	//singleton instance
-	private int numFloors;			//number of floors
-	private int numElevators;			//number of elevators
-	private ArrayList<Floor> floors = new ArrayList<Floor>();
-	private ArrayList<Elevator> elevators = new ArrayList<Elevator>();
-	private ElevatorController controller;
+	private int numFloors; //num of floors in building
+	private int numElevators; // num of elevators
+	Random rand = new Random();
 	
-	//Building Constructor
-	private Building(int numFloors, int numElevators ) {
-		this.numFloors = numFloors;
-		this.numElevators = numElevators;
-		for(int i = 1; i <= numFloors; i++) {
-			floors.add(new Floor(i));
-		}
-		for(int i = 1; i <= numElevators; i++) {
-			elevators.add(new Elevator(i,20));
-		}
-		controller = ElevatorController.getInstance(0,5,10,20,5,elevators);
-		
-	}
+	private static Building instance; //singleton pattern
 	
-	//Singleton Design method for Building
-	public static Building getInstance(int floorNumber, int elevatorNumber) {
-		if(instance == null) {
-			instance = new Building(floorNumber, elevatorNumber);
-		}
+	//constructor
+	private Building(){}
+	
+	//making the singleton
+	public static Building getInstance() {
+		if (instance == null)
+			instance = new Building();
 		return instance;
 	}
 	
-	public ArrayList<Floor> getFloorList(){
-		return floors;
+	public int getnumFloors(){
+		return this.numFloors;
 	}
 	
-	public ArrayList<Elevator> getElevatorList(){
-		return elevators;
+	public int getnumElevators(){
+		return this.numElevators;
 	}
-
-	public int getNumFloors() {
-		return numFloors;
-	}
-
-	public int getNumElevators() {
-		return numElevators;
+	
+	//Simulation Start
+	public void buildBuilding(int numFloors, int numElevators, int capacity, long floorTime, long doorOpenTime, long idleTime){
+		this.numFloors = numFloors;
+		this.numElevators = numElevators;
+		int newPeople = (int) (11.0 * Math.random()) + 1;
+        int floorStart = 0;
+        int floorEnd = 0;
+    	
+		// Create Floors, gotta do other stuff
+		for (int i = 1; i < numFloors; i++) {
+			Floor F = new Floor(i);
+		}
+		
+		// Create Elevators, gotta do other stuff
+		for (int i = 0; i < numElevators; i++){
+			Elevator E = new Elevator(i, capacity,floorTime,doorOpenTime,idleTime);
+		}
+		
+		// create person objects
+    	for (int i = 0; i < newPeople; i ++) {
+    		while(floorStart == floorEnd) {
+    			floorStart = rand.nextInt(numFloors);
+        		floorEnd = rand.nextInt(numFloors);
+    		}
+    		Person p = new Person(i,floorStart,floorEnd);
+    	}
 	}
 }
