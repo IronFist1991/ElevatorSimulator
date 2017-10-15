@@ -26,12 +26,25 @@ public class Floor {
 	}
 	
 	public void removeWaitingPeople(int person){
-		waitingPeople.remove(person);
+		for(int r = 0; r < waitingPeople.size(); r++) {
+			if (waitingPeople.get(r) == person)
+					waitingPeople.remove(r);
+		}
 	}
 	
 	public void addDonePeople(int person){
 		donePeople.add(person);
 	}
+
+	public ArrayList<Integer> getWaitingPeople() {
+		return waitingPeople;
+	}
+
+	public ArrayList<Integer> getDonePeople() {
+		return donePeople;
+	}
+	
+	
 	
 
 }

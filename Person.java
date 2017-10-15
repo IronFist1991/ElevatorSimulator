@@ -1,6 +1,5 @@
 
-import java.util.Random;
-import java.time.LocalTime;
+
 
 public class Person {
 
@@ -11,10 +10,7 @@ public class Person {
 	location loc;
 	private double waitTime; //how long outside elevator, waiting
 	private double rideTime; // how long in the elevator
-	private boolean direction; //direction true = up, false = down 
 	ElevatorController controller = ElevatorController.getInstance();
-	
-	Random rand = new Random();
 	
 	//constructor
 	public Person(int pId, int floorStart, int floorEnd) {
@@ -23,45 +19,36 @@ public class Person {
 		this.floorStart = floorStart;
 		this.floorEnd = floorEnd;
 		loc = location.FLOOR;
-		
-        //set direction
-		if (floorStart < floorEnd) 
-			direction = true;
-		else direction = false;	
-		
-		/*/not sure. wanted to say if person_floor = elevator_floor but go thru controller?
-		if (ElevatorController.getInstance().isPersonOnElevator()){
-		sendDestination(floorStart, floorEnd);
-			// if this is true, the person has entered the elevator and we can start time*/
-	}
-	
-	//direction true = up, false = down
-	public int sendOrigin() {
-		// send to elevator controller
-		return ElevatorController.getInstance().pickElevator(floorStart, direction);
-	}
-	
-	public void sendDestination(){
-		loc = location.ELEV;
-		ElevatorController.getInstance().setFloorEnd(floorEnd);
 	}
 	
 	// set methods
-	public void setWaitTime(int waitTime){
+	public void setWaitTime(double waitTime){
 		this.waitTime = waitTime;
 	}
 	
-	public void setRideTime(int rideTime){
+	public void setRideTime(double rideTime){
 		this.rideTime = rideTime;
 	}
 	
+	public int getFloorStart() {
+		return floorStart;
+	}
+
+	public int getFloorEnd() {
+		return floorEnd;
+	}
+
+	public double getWaitTime() {
+		return waitTime;
+	}
+
+	public double getRideTime() {
+		return rideTime;
+	}
+
 	// getters
 	public int getPid(){
 		return this.pId;
-	}
-	
-	public boolean getDirection() {
-		return this.direction;
 	}
 	
 	// returns true if this person is on an elevator
@@ -69,6 +56,20 @@ public class Person {
 		if(loc == location.ELEV)
 			return true;
 		return false;
+	}
+	
+	//Person enters an elevator
+	public void enterElevator(Elevator e) {
+		e.addRiders(pId);
+		loc = location.ELEV;
+		System.out.println("Person " + pId + " enters Elevator " + e.geteId() );
+	}
+	
+	//Person exits the elevator
+	public void exitElevator(Elevator e) {
+		e.removeRiders(pId);
+		loc = location.FLOOR;
+		System.out.println("Person " + pId + " leaves Elevator " + e.geteId() + " and arrives at floor " + floorEnd);
 	}
 	
 	

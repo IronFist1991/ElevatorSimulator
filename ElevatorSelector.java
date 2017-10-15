@@ -1,5 +1,6 @@
+import java.util.ArrayList;
 
 public interface ElevatorSelector {
 	
-	public int pickElevator(int floor, boolean direction);
+	public int pickElevator(ArrayList<Elevator> elevators,Floor floor);
 	}
