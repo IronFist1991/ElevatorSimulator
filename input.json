@@ -1,8 +1,9 @@
 {
-	"floors": 10,
+	"floors": 20,
 	"elevators": 4,
 	"max_persons": 13,
 	"time_per_floor_ms": 1000,
 	"door_time_ms": 2200,
 	"idle_time_ms": 6000,
+	"duration_ms": 100000,
 }

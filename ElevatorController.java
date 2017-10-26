@@ -1,3 +1,4 @@
+package ElevatorSim;
 import java.util.ArrayList;
 
 public class ElevatorController implements ElevatorSelector {
@@ -16,8 +17,14 @@ public class ElevatorController implements ElevatorSelector {
 		return instance;
 	}
 	
+	public int pickElevator(ArrayList<Elevator> elevators,Floor floor) {
+		int sendElev =delegate.pickElevator(elevators,floor);
+		return sendElev;
+		
+	}
+	
 	//Signal received from floor
-	public void floorSignal(ArrayList<Elevator> elevators, Floor floor, Person p) {
+	/*public void floorSignal(ArrayList<Elevator> elevators, Floor floor, Person p) {
 		//Choose an Elevator
 		int sendElev = pickElevator(elevators,floor);
 		double pre = System.currentTimeMillis();
@@ -56,15 +63,9 @@ public class ElevatorController implements ElevatorSelector {
 		
 	}
 	
-	public int pickElevator(ArrayList<Elevator> elevators,Floor floor) {
-		int sendElev =delegate.pickElevator(elevators,floor);
-		return sendElev;
-		
-	}
-	
 	public void setFloorEnd (int floor) {
 		//Floor end from person who is inside the elevator
-	}
+	}*/
 	
 	
 }

@@ -1,4 +1,5 @@
-
+package ElevatorSim;
+import gui.ElevatorDisplay.Direction;
 
 
 public class Person {
@@ -6,22 +7,26 @@ public class Person {
 	private int pId; // person ID 
 	private int floorStart; //where the person is
 	private int floorEnd; //where they want to go
-	enum location { FLOOR, ELEV};
-	location loc;
 	private double waitTime; //how long outside elevator, waiting
 	private double rideTime; // how long in the elevator
-	ElevatorController controller = ElevatorController.getInstance();
+	private Direction pDir; //direction person wants to go
 	
-	//constructor
+	//C'TOR
 	public Person(int pId, int floorStart, int floorEnd) {
-		// given in MAIN based on number of riders
 		this.pId = pId; 
 		this.floorStart = floorStart;
 		this.floorEnd = floorEnd;
-		loc = location.FLOOR;
+		if(floorStart > floorEnd) {
+			pDir = Direction.DOWN;
+		}
+		else
+			pDir = Direction.UP;
+		waitTime = TimeManager.getInstance().getCurrentTime();
+		System.out.println(TimeManager.getInstance().getTimeString() + "Person P" + pId + " created on Floor " + 
+			floorStart + ", wants to go " + pDir + " to Floor " + floorEnd);
 	}
 	
-	// set methods
+	// SET METHODS
 	public void setWaitTime(double waitTime){
 		this.waitTime = waitTime;
 	}
@@ -30,6 +35,7 @@ public class Person {
 		this.rideTime = rideTime;
 	}
 	
+	// GET METHODS
 	public int getFloorStart() {
 		return floorStart;
 	}
@@ -46,32 +52,18 @@ public class Person {
 		return rideTime;
 	}
 
-	// getters
 	public int getPid(){
-		return this.pId;
+		return pId;
 	}
 	
-	// returns true if this person is on an elevator
-	public boolean isOnElevator() {
-		if(loc == location.ELEV)
-			return true;
-		return false;
+	public Direction getDir() {
+		return pDir;
 	}
 	
-	//Person enters an elevator
-	public void enterElevator(Elevator e) {
-		e.addRiders(pId);
-		loc = location.ELEV;
-		System.out.println("Person " + pId + " enters Elevator " + e.geteId() );
+	// person status
+	public void personReport() {
+		System.out.println("Person P"+ pId + " started on Floor " + floorStart + " and ended at Floor " 
+				+ floorEnd + ". Ride time: " + rideTime + "ms Wait Time: " + waitTime + "ms");
 	}
-	
-	//Person exits the elevator
-	public void exitElevator(Elevator e) {
-		e.removeRiders(pId);
-		loc = location.FLOOR;
-		System.out.println("Person " + pId + " leaves Elevator " + e.geteId() + " and arrives at floor " + floorEnd);
-	}
-	
-	
 	
 }

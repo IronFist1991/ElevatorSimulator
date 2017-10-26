@@ -1,4 +1,6 @@
+package ElevatorSim;
 import java.util.ArrayList;
+
 import static gui.ElevatorDisplay.Direction.DOWN;
 import static gui.ElevatorDisplay.Direction.UP;
 import static gui.ElevatorDisplay.Direction.IDLE;
@@ -16,7 +18,7 @@ public class ElevatorImpl implements ElevatorSelector {
 	// Implementation to choose which elevator goes to specified floor
 	public int pickElevator(ArrayList<Elevator> elevators,Floor floor) {
 		// TODO Auto-generated method stub
-		int elevNum = 1;
+		/*int elevNum = 1;
 		for(Elevator e : elevators) {
 			if(e.isFull()) continue;
 			else if(e.getState() == IDLE && e.getCurrentFloor() == floor.getFloorId()) {
@@ -31,6 +33,7 @@ public class ElevatorImpl implements ElevatorSelector {
 			else if(e.getState() == IDLE)
 				elevNum = e.geteId();
 		}
-		return elevNum;
+		return elevNum;*/
+		return 1;
 	}
 }

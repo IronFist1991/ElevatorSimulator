@@ -1,29 +1,27 @@
-
-import static gui.ElevatorDisplay.Direction.DOWN;
-import static gui.ElevatorDisplay.Direction.UP;
-
+package ElevatorSim;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import gui.ElevatorDisplay;
 import gui.ElevatorDisplay.Direction;
-
 public class Elevator {
 	
 	private int eId; //elevator ID
-	private int currentFloor; // floor the elev is on
+	private double currentFloor; // floor the elev is on
 	private int capacity; // how many people can fit in the elev
-	private long floorTime;
-	private long doorOpenTime;
-	private long idleTime;
-	private gui.ElevatorDisplay.Direction state; //state of the elevator
+	private long floorTime; // time per floor
+	private long doorOpenTime; // time doors stay open
+	private long idleTime; // time elev sits idle before returning to floor 1
+	private long elevTime; //used locally for time
+	private Direction direction; //state of the elevator
+	private Direction pendingDirection; //direction the elevator will eventually go
 	private boolean doors; // true = open, false = close
 	
-	private ArrayList<Integer> riders = new ArrayList<Integer>(); // people on elevator
-	private ArrayList<Integer> floorStops = new ArrayList<Integer>(); // stops the elevator has to make as given by people pressing buttons
-	private ArrayList<Integer> riderStops = new ArrayList<Integer>(); // stops the elevator has to make because the people on the elevator want to stop
-	Building b = Building.getInstance();
+	private HashMap<Integer, ArrayList<Person>> riders = new HashMap(); //People on the elevator
+	private HashMap<Direction, ArrayList<Integer>> floorStops = new HashMap(); //Hashmap of floor requests
 	
-	//constructor
+	//C'TOR
 	public Elevator(int eId, int capacity, long floorTime, long doorOpenTime, long idleTime){
 		this.eId = eId;
 		this.currentFloor = 1;
@@ -32,133 +30,228 @@ public class Elevator {
 		this.doorOpenTime = doorOpenTime;
 		this.idleTime = idleTime;
 		doors = false;
-		state = Direction.IDLE;
+		direction = Direction.IDLE;
+	}
+	
+	//UPDATE THIS ELEVATOR
+	public void update(long time) {
+		moveElevator(time);
+		
+		// if the elev has no floor stops
+		if(!floorStops.isEmpty()) {
+			floorStops.get(pendingDirection).remove(new Integer((int) currentFloor));
+			if(floorStops.get(pendingDirection).isEmpty()) {
+				floorStops.remove(pendingDirection);
+			}
+			direction = pendingDirection;
+			pendingDirection = direction;
+			processFloor();
+		}
+		// if there are no riders
+		else if(!riders.isEmpty()) {
+			elevTime = TimeManager.getInstance().getCurrentTime();
+			processFloor();
+		}
+		// if the elev is at ground floor
+		else if(currentFloor == 1) {
+			direction = Direction.IDLE;
+		}
+		// if we are not at 1 and the elev is idle, go to floor 1
+		if(currentFloor > 1 && (TimeManager.getInstance().getCurrentTime() - elevTime) >= idleTime && direction == Direction.IDLE) {
+			resetElevator(time);
+		}
+		
+	}
+	
+	//ELEVATOR STOPS AT A FLOOR
+	private void processFloor() {
+		long pre = System.currentTimeMillis();
+		ArrayList<Person> waitingPeople = Building.getInstance().getWaitingPeople((int)currentFloor, direction);
+		for(Person p: waitingPeople) {
+			// if there is a waiting person, we pick them up
+			if(!doors) {
+				System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " has arrived at Floor " + (int) currentFloor + " for Floor Request [Current Floor Requests: " 
+						+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
+				open();
+			}
+			if(!isFull()) {
+				addPerson(p);
+				p.setRideTime(TimeManager.getInstance().getCurrentTime());
+			}
+		}
+		ArrayList<Person> gettingOff = new ArrayList<>();
+		// let people off when we arrive at their requested floor
+		if(riders.containsKey((int) currentFloor)){
+			for(Person p : riders.get((int)currentFloor)) {
+				if(!doors){
+					System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " has arrived at Floor " + (int) currentFloor + " for Floor Request [Current Floor Requests: " 
+							+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
+					open();
+				}
+				gettingOff.add(p);
+				System.out.println(TimeManager.getInstance().getTimeString() + "Person P" + p.getPid() + " has left Elevator " + eId + "[Riders: " 
+						+ displayRiders() + "]");
+				p.setRideTime(TimeManager.getInstance().getCurrentTime() - p.getRideTime());
+			}
+			riders.remove(new Integer((int)currentFloor));
+			Building.getInstance().addDonePeople((int)currentFloor, gettingOff);
+		}
+		// no riders and no stops
+		if(riders.isEmpty() && floorStops.isEmpty()) {
+			direction = Direction.IDLE;
+			ElevatorDisplay.getInstance().updateElevator(eId, (int) currentFloor, 0, Direction.IDLE);
+		}
+		long post = System.currentTimeMillis();
+		try {
+			Thread.sleep(doorOpenTime -(post-pre));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		if(doors) {
+			close();
+		}
+	}
+	
+	//PERSON ENTERS THE ELEVATOR
+	private void addPerson(Person p) {
+
+		if(!riders.containsKey(p.getFloorEnd())) {
+			riders.put(p.getFloorEnd(), new ArrayList<Person>());
+		}
+		riders.get(p.getFloorEnd()).add(p);
+		System.out.println(TimeManager.getInstance().getTimeString() + "Person P" + p.getPid() + " entered Elevator " + eId + "[Riders: " 
+				+ displayRiders() + "]");
+		if(direction == Direction.IDLE) {
+			direction = p.getDir();
+			System.out.println("Elevator Direction set to " + direction);
+		}
+		Building.getInstance().removeWaitingPeople(p.getFloorStart(), p);
+		p.setWaitTime(TimeManager.getInstance().getCurrentTime() - p.getWaitTime());
+		System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " Rider Request made for Floor " + p.getFloorEnd() + " [Current Floor Requests: " 
+				+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
 	}
 	
 
-	//return eId
-	public int geteId() {
+	//GETTERS
+	public int getEid() {
 		return eId;
 	}
 	
-	//return elevator state
-	public gui.ElevatorDisplay.Direction getState() {
-		return state;
+	public Direction getDirection() {
+		return direction;
 	}
 
-	// get current floor number
-	public int getCurrentFloor() {
-		return currentFloor;
-	}
-
-	// are the doors open or closed
+	// DOORS OPEN OR CLOSED?
 	public boolean isDoors() {
 		return doors;
 	}
 	
+	// RETURNS TRUE IF CAPACITY HAS BEEN REACHED
 	public boolean isFull() {
 		if(riders.size() == this.capacity)
 			return true;
 		return false;
 	}
-
-	// set doors to open or close
-	public void setDoors(boolean doors) {
-		this.doors = doors;
+	
+	//RETURN DIRECTION FROM CURRENT FLOOR TO DESTINATION FLOOR
+	public Direction getDirTo(int floor) {
+		if(currentFloor < floor)
+			return Direction.UP;
+		else if(currentFloor > floor)
+			return Direction.DOWN;
+		return null;
 	}
-
-	// return rider list
-	public ArrayList<Integer> getRiders() {
-		return riders;
+		
+	//OPEN DOORS
+	private void open() {
+		System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " Doors Open");
+		ElevatorDisplay.getInstance().openDoors(eId);
+		doors = true;
+	}
+		
+	//CLOSE DOORS
+	private void close() {
+		System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " Doors Close");
+		ElevatorDisplay.getInstance().closeDoors(eId);
+		doors = false;
 	}
 	
-	// get floor stops
-	public ArrayList<Integer> getFloorStops() {
-		return floorStops;
-	}
-	
-	// get rider stops
-	public ArrayList<Integer> getRiderStops() {
-		return riderStops;
-	}
-
-	// add a rider
-	public void addRiders(int rider) {
-		riders.add(rider);
-	}
-	
-	// remove a rider
-	public void removeRiders(int rider) {
-		for(int r = 0; r < riders.size(); r++) {
-			if (riders.get(r) == rider)
-					riders.remove(r);
+	//ADD FLOOR REQUESTS
+	public void addFloorStops(int floor, Direction dir) {
+		if(!floorStops.containsKey(dir)) {
+			floorStops.put(dir, new ArrayList<Integer>());
 		}
-	}
-
-	// add to the floor stops
-	public void addFloorStops(int floorId) {
-		riderStops.add(floorId);
-	}
-	
-	// remove to the floor stops
-	public void removeFloorStops(int floorId) {
-		for(int r = 0; r < floorStops.size(); r++) {
-			if (floorStops.get(r) == floorId)
-					floorStops.remove(r);
+		if(floor == currentFloor && !floorStops.get(dir).contains(floor)) {
+			floorStops.get(dir).add(floor);
+			pendingDirection = dir;
+			System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " is going to Floor " + floor + " for " + dir + " request. [Current Floor Requests: " 
+					+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
+			return;
 		}
-	}
-	
-	// add to the rider stops
-	public void addRiderStops(int floorId) {
-		riderStops.add(floorId);
-	}
-	
-	// remove to the rider stops
-	public void removeRiderStops(int floorId) {
-		for(int r = 0; r < riderStops.size(); r++) {
-			if (riderStops.get(r) == floorId)
-					riderStops.remove(r);
+		if(direction == Direction.IDLE) {
+			getDirTo(floor);
+			pendingDirection = dir;
+		}
+		if(direction == Direction.UP && getDirTo(floor) != Direction.UP) {
+			//Here is where in Test4, Person 5's request to go up from floor1 should be taken into account by
+			//elevator 1. However, we have not found this solution just yet.
+		}
+		if(direction == Direction.DOWN && getDirTo(floor) != Direction.DOWN) {
+			System.exit(-1);
 		}
 	}
 	
-	public void setCurrentFloor(int currentFloor) {
-		this.currentFloor = currentFloor;
-	}
 	
-	//if elevator is idle, send back to floor 1
-	public void setIdle() {
-		try {
-			moveElevator(currentFloor, 1);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	
+	//MOVES THIS ELEVATOR
+	private void moveElevator(long time){
+		if(direction != Direction.IDLE) {
+			double move = time/floorTime;
+			if(direction == Direction.UP) {
+				System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " is moving from Floor " + (int) currentFloor + " to Floor " + (int)(currentFloor + 1) + " [Current Floor Requests: " 
+						+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
+				currentFloor += move;
+			}
+			else {
+				System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + " is moving from Floor " + (int) currentFloor + " to Floor " + (int)(currentFloor - 1) + " [Current Floor Requests: " 
+						+ displayFloorStops() + "][Current Rider Requests: " + displayRiders() + "]");
+				currentFloor -= move;
+			}
+			ElevatorDisplay.getInstance().updateElevator(eId, (int) currentFloor, riders.size(), direction);
 		}
-	}
-	
-	//Moves this elevator
-	public void moveElevator(int fromFloor, int toFloor) throws InterruptedException {
-    	int numRiders = riders.size();
-    	ElevatorDisplay.getInstance().closeDoors(eId);
-    	doors = false;
-        if (fromFloor < toFloor) {
-            for (int i = fromFloor; i <= toFloor; i++) {
-            	setCurrentFloor(i);
-                ElevatorDisplay.getInstance().updateElevator(eId, i, numRiders, UP);
-                state = UP;
-                Thread.sleep(floorTime);
-            }
-        } else {
-            for (int i = fromFloor; i >= toFloor; i--) {
-            	setCurrentFloor(i);
-                ElevatorDisplay.getInstance().updateElevator(eId, i, numRiders, DOWN);
-                state = DOWN;
-                Thread.sleep(floorTime);
-            }
-        }
-        ElevatorDisplay.getInstance().openDoors(eId);
-        doors = true;
-        Thread.sleep(doorOpenTime);
+    	
     }
 	
+	//SEND ELEVATOR BACK TO FLOOR 1 AFTER TIMEOUT PERIOD
+	private void resetElevator(long time) {
+		direction = Direction.DOWN;
+		System.out.println(TimeManager.getInstance().getTimeString() + "Elevator " + eId + 
+				" returning to first floor." );
+	}
 	
+	//PRINTS RIDER STOPS
+	public String displayRiders(){
+		String toPrint = "";
+		for (Entry<Integer, ArrayList<Person>> entry : riders.entrySet()) {
+	        for(Person people : entry.getValue()){
+	            toPrint += "P" + people.getPid() + ", " ;
+	        }
+	    } 
+	    return toPrint;
+	}
+
+	//PRINTS FLOORSTOPS
+	public String displayFloorStops(){
+		String toPrint = "";
+		for (Entry<Direction, ArrayList<Integer>> entry : floorStops.entrySet()) {
+	        for(int f : entry.getValue()){
+	            toPrint += f + ", " ;
+	        }
+	    }
+	    return toPrint;
+	}
+	
+	
+	
+
 }

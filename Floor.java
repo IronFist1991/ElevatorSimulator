@@ -1,3 +1,4 @@
+package ElevatorSim;
 
 
 import java.util.ArrayList;
@@ -5,46 +6,47 @@ import java.util.ArrayList;
 public class Floor {
 	
 	private int floorId; // what floor number
-	private ArrayList<Integer> waitingPeople = new ArrayList<Integer>(); // people waiting on that floor
-	private ArrayList<Integer> donePeople = new ArrayList<Integer>(); // people who have gotten off on that floor
-	Building b = Building.getInstance();
+	private ArrayList<Person> waitingPeople = new ArrayList<Person>(); // people waiting on that floor
+	private ArrayList<Person> donePeople = new ArrayList<Person>(); // people who have gotten off on that floor
 	
-	//c'tor
+	//C'TOR
 	public Floor(int floorId) {
 		this.floorId = floorId;
 	
 	}
 	
-	//get the floor number
+	//RETURN FLOOR #
 	public int getFloorId(){
 		return this.floorId;
 	}
 	
-	//set lists
-	public void addWaitingPeople(int person){
+	//RETURNS LIST OF WAITING PEOPLE
+	public ArrayList<Person> getWaitingPeople(){
+		return waitingPeople;
+	}
+	
+	//MODIFY LISTS
+	public void addWaitingPeople(Person person){
 		waitingPeople.add(person);
 	}
 	
-	public void removeWaitingPeople(int person){
-		for(int r = 0; r < waitingPeople.size(); r++) {
-			if (waitingPeople.get(r) == person)
-					waitingPeople.remove(r);
-		}
+	public void removeWaitingPeople(Person person){
+		waitingPeople.remove(person);
 	}
 	
-	public void addDonePeople(int person){
+	public void addDonePeople(Person person){
 		donePeople.add(person);
 	}
-
-	public ArrayList<Integer> getWaitingPeople() {
-		return waitingPeople;
-	}
-
-	public ArrayList<Integer> getDonePeople() {
+	
+	// get list of done people
+	public ArrayList<Person> getDonePeople(){
 		return donePeople;
 	}
 	
-	
-	
-
+	// get the floors needed
+	public void floorReport() {
+		for (Person p: donePeople){
+			p.personReport();
+		}
+	}
 }
