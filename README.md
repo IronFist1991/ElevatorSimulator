@@ -5,6 +5,7 @@ The quarter programming project is to design and implement an object-oriented el
 Simulation Description
 
 Elevator floor-call (Up/Down):
+
  A person presses the Up or Down button from a specific floor (note – the first floor will not have a Down button and the top floo       will not have an Up button).
 
  The Up/Down request goes to the Elevator Controller whose job it is to determine which elevator should respond to the call. That might   be an idle elevator, or an elevator already in motion.
